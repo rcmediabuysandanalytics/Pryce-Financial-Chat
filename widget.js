@@ -704,9 +704,8 @@
     scrollToBottom();
   }
 
-  function handleUserMessage(textOverride) {
+  async function handleUserMessage(textOverride) {
     if (STATE.activeFlow) {
-      // Redundant handled by caller usually, but safe to keep
       handleInteractionCheck({ preventDefault: () => { }, stopPropagation: () => { } });
       return;
     }
@@ -717,16 +716,31 @@
     if (!textOverride) inputField.value = '';
     addMessage({ text, type: 'user' });
 
-    // Show typing then reply
-    setTimeout(() => {
-      showTypingIndicator().then(() => {
-        // Placeholder logic for generic messages
-        const reply = "Thanks — I can help with FAQs or pass your message to the team.";
-        addMessage({ text: reply, type: 'bot' });
-        // Send to backend (fire & forget)
-        sendChatToBackend(text, STATE.messages, window.location.href);
+    // Typing indicator while waiting for backend
+    await showTypingIndicator();
+
+    // Call n8n and WAIT for the response
+    const ai = await sendChatToBackend(text, STATE.messages, window.location.href);
+
+    // If backend fails or returns invalid JSON
+    if (!ai || typeof ai.Message !== 'string') {
+      addMessage({
+        text: "Sorry — I’m having trouble connecting right now. Please try again, or leave a message and our team will follow up.",
+        type: 'bot'
       });
-    }, 2000);
+      // Optional: auto-open lead form on failure
+      // handleShowLeadForm();
+      return;
+    }
+
+    // Show AI reply
+    addMessage({ text: ai.Message, type: 'bot' });
+
+    // If AI says it can't answer, open Leave Message form
+    if (ai["Leave Message"] === true) {
+      // Small delay so the user sees the AI response first
+      setTimeout(() => handleShowLeadForm(), 400);
+    }
   }
 
   function showTypingIndicator() {
@@ -1293,37 +1307,58 @@
   }
 
   async function postToN8N(url, payload) {
-    if (!url) return;
+    if (!url) return null;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
+
     try {
-      await fetch(url, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+
+      // If server did not return JSON, fallback safely
+      const contentType = res.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+
+      const data = isJson ? await res.json() : await res.text();
+
+      if (!res.ok) {
+        console.error('n8n response not OK:', res.status, data);
+        return null;
+      }
+
+      // Expecting: { "SessionID": "...", "Message": "...", "Leave Message": false }
+      return typeof data === 'object' ? data : null;
     } catch (e) {
-      // Graceful failure - log but don't break UI
-      console.error("Backend sync failed:", e);
+      console.error('Backend request failed:', e);
+      return null;
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
   async function sendChatToBackend(message, transcript, pageUrl) {
-    if (!CONFIG.API_CHAT_URL) return;
+    if (!CONFIG.API_CHAT_URL) return null;
 
     const payload = {
       event: 'chat_message',
-      type: 'Normal/FAQ', // Added for n8n routing
+      type: 'Normal/FAQ',
       sessionId: getSessionId(),
       pageUrl: pageUrl || window.location.href,
       timestamp: new Date().toISOString(),
       message: message,
-      transcript: transcript, // full history
+      transcript: transcript,
       meta: {
         userAgent: navigator.userAgent,
         referrer: document.referrer
       }
     };
 
-    await postToN8N(CONFIG.API_CHAT_URL, payload);
+    return await postToN8N(CONFIG.API_CHAT_URL, payload);
   }
 
   async function sendLeadToBackend(data) {
