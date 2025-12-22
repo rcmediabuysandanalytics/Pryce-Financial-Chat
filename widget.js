@@ -611,6 +611,73 @@
       font-size: 12px;
     }
 
+    /* Modal Overlay */
+    .trm-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2147483648; /* One higher than widget */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s;
+    }
+    .trm-modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .trm-modal-content {
+      background: white;
+      width: 90%;
+      max-width: 800px; /* Comfortable reading width */
+      height: 90%;
+      border-radius: 12px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+    .trm-modal-overlay.open .trm-modal-content {
+      transform: scale(1);
+    }
+    .trm-modal-close {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      background: white;
+      border: 2px solid #ef4444; /* Red border */
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+      color: #ef4444; /* Red X */
+      transition: all 0.2s;
+    }
+    .trm-modal-close:hover {
+      background: #fef2f2;
+      transform: scale(1.1);
+    }
+    .trm-modal-iframe {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 12px;
+    }
+
   `;
 
   /* ==========================================================================
@@ -1260,6 +1327,73 @@
 
   function handleBookAppointment() {
     if (STATE.activeFlow) return;
+
+    // Direct Modal Logic
+    const bookingUrl = "https://api.leadconnectorhq.com/widget/booking/6kJIqNK4AS4XXMXnrAc9";
+
+    // Create Modal DOM
+    const overlay = document.createElement('div');
+    overlay.className = 'trm-modal-overlay';
+
+    // Accessibility
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
+    overlay.innerHTML = `
+      <div class="trm-modal-content">
+        <button class="trm-modal-close" aria-label="Close booking">✕</button>
+        <iframe src="${bookingUrl}" class="trm-modal-iframe" title="Booking Calendar"></iframe>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const iframe = overlay.querySelector('iframe');
+    let hasBookingStarted = false;
+
+    // Detect interaction: If focus shifts to iframe, assume user is "booking"
+    const onFocusListener = () => {
+      if (document.activeElement === iframe) {
+        hasBookingStarted = true;
+      }
+    };
+    window.addEventListener('blur', onFocusListener);
+
+    // Animation
+    requestAnimationFrame(() => {
+      overlay.classList.add('open');
+    });
+
+    // Close logic
+    const closeBtn = overlay.querySelector('.trm-modal-close');
+    const close = () => {
+      window.removeEventListener('blur', onFocusListener); // Cleanup
+      overlay.classList.remove('open');
+      setTimeout(() => overlay.remove(), 300); // Wait for transition
+    };
+
+    closeBtn.onclick = close;
+
+    // Close on click outside (conditioned)
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        if (!hasBookingStarted) {
+          close();
+        } else {
+          // Visual feedback that they can't close via click anymore
+          closeBtn.style.transform = 'scale(1.2)';
+          setTimeout(() => closeBtn.style.transform = '', 200);
+        }
+      }
+    };
+
+    // Inform user in chat (optional)
+    addMessage({ text: "I've opened the booking calendar for you.", type: 'bot' });
+  }
+
+  /* LEGACY BOOKING LOGIC (COMMENTED OUT)
+  function handleBookAppointment_LEGACY() {
+    if (STATE.activeFlow) return;
     STATE.activeFlow = 'booking';
     toggleInputLock(true);
 
@@ -1690,6 +1824,7 @@
       });
     });
   }
+  */
 
   /* ==========================================================================
   /* ==========================================================================
