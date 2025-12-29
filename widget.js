@@ -314,49 +314,49 @@
     }
 
     .pryce-chip {
-      background: linear-gradient(135deg, var(--pryce-primary), var(--pryce-primary-hover));
-      border: 1px solid transparent; /* subtle border placeholder */
-      color: #FFFFFF; /* High contrast white text */
-      padding: 10px 18px;
-      border-radius: 24px;
-      font-size: 14px;
-      font-weight: 500;
+      background: transparent;
+      border: 1px solid var(--pryce-primary);
+      color: var(--pryce-primary);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       user-select: none;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: none;
       letter-spacing: 0.3px;
     }
 
     .pryce-chip:hover {
-      background: linear-gradient(135deg, var(--pryce-primary-hover), var(--pryce-primary));
+      background: var(--pryce-primary);
       transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(16, 48, 79, 0.25);
+      box-shadow: 0 4px 8px rgba(16, 48, 79, 0.2);
       color: #FFFFFF;
     }
 
     /* FAQ Button Class - Premium Look */
     .pryce-faq-btn {
         width: 100%;
-        padding: 12px 16px;
-        background: linear-gradient(135deg, var(--pryce-primary), var(--pryce-primary-hover));
-        color: #FFFFFF;
-        border: none;
-        border-radius: 12px;
-        font-size: 14px;
+        padding: 10px 14px;
+        background: transparent;
+        color: var(--pryce-primary);
+        border: 1px solid var(--pryce-primary);
+        border-radius: 6px;
+        font-size: 12px;
         font-weight: 500;
         cursor: pointer;
         text-align: left;
         font-family: inherit;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: none;
         display: block;
         margin-bottom: 0px; 
     }
     .pryce-faq-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(16, 48, 79, 0.2);
-        background: linear-gradient(135deg, var(--pryce-primary-hover), var(--pryce-primary));
+        box-shadow: 0 4px 8px rgba(16, 48, 79, 0.2);
+        background: var(--pryce-primary);
         color: #FFFFFF;
     }
 
