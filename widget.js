@@ -945,7 +945,7 @@
 
     const actions = [
       { label: "FAQs", handler: handleShowFAQs },
-      { label: "Book Appointment", handler: handleBookAppointment },
+      { label: "Book Appointment", handler: handleBookAppointment, disabled: true },
       { label: "Leave a message", handler: handleShowLeadForm }
     ];
 
@@ -953,7 +953,16 @@
       const chip = document.createElement('button');
       chip.className = 'pryce-chip';
       chip.textContent = action.label;
+
+      if (action.disabled) {
+        chip.style.opacity = '0.5';
+      }
+
       chip.onclick = () => {
+        if (action.disabled) {
+          showToast("This will be updated soon");
+          return;
+        }
         if (!handleInteractionCheck({ preventDefault: () => { }, stopPropagation: () => { } })) return;
         action.handler();
       };
