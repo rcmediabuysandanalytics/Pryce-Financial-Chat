@@ -703,6 +703,27 @@
       border-radius: 12px;
     }
 
+    /* Mobile Adjustments */
+    @media (max-width: 600px) {
+      #pryce-widget-container {
+        bottom: 70px;
+      }
+      .pryce-panel {
+        width: 85vw; /* More responsive than fixed 300px */
+        max-width: 300px; /* Cap at 300px */
+        height: 500px; /* Slightly shorter */
+      }
+      .pryce-launcher {
+        width: 50px;
+        height: 50px;
+      }
+      .pryce-launcher-icon {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+
   `;
 
   /* ==========================================================================
